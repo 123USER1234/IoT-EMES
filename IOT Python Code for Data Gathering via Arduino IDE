@@ -1,0 +1,61 @@
+import csv
+import random
+import time
+import os
+
+# Function to generate data for each sensor
+def simulate_data():
+    #  voltage (between 3V and 5V)
+    voltage = round(random.uniform(3.0, 5.0), 2)
+    #  current (between 0.1A and 2.0A)
+    current = round(random.uniform(0.1, 2.0), 2)
+    # Calculate power (P = V * I)
+    power = round(voltage * current, 2)
+    #  real-time cost (per your original cost calculation formula)
+    cost_per_kwh = 0.23  # Cost in USD per kWh
+    real_time_cost = round((power / 1000) * cost_per_kwh, 4)
+    #  total cost (accumulated over time)
+    total_cost = round(random.uniform(0.0, 50.0), 2)
+    #  yearly costs for departments
+    hr_cost = round(random.uniform(100, 1000), 2)
+    it_cost = round(random.uniform(100, 1000), 2)
+    finance_cost = round(random.uniform(100, 1000), 2)
+    external_relations_cost = round(random.uniform(100, 1000), 2)
+    #  gas status (Low, Medium, High)
+    gas_status = random.choice(['Low', 'Medium', 'High'])
+    
+    #  time (in seconds since start)
+    time_seconds = int(time.time())
+
+    # Return all the  data
+    return [time_seconds, voltage, current, power, real_time_cost, total_cost,
+            hr_cost, it_cost, finance_cost, external_relations_cost, gas_status]
+
+# Get the path to the current directory
+script_directory = os.path.dirname(os.path.realpath(__file__))
+
+# Define the path for the CSV file (it will be saved in the same folder as the script)
+csv_file_path = os.path.join(script_directory, 'IoTCircuitData.csv')
+
+# Open a CSV file to add data
+with open(csv_file_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    
+    # Write the header row to the CSV file
+    writer.writerow(["Time (s)", "Voltage (V)", "Current (A)", "Power (W)", 
+                     "Real-time Cost (USD)", "Total Cost (USD)", 
+                     "HR Yearly Cost (USD)", "IT Yearly Cost (USD)", 
+                     "Finance Yearly Cost (USD)", "External Relations Yearly Cost (USD)", 
+                     "Gas Status"])
+
+    # Get the current time to track when 3 hours (10,800 seconds) pass
+    start_time = time.time()
+    end_time = start_time + 10800  # 3 hours = 10,800 seconds
+
+    # Run the program for 3 hours
+    while time.time() < end_time:
+        data = simulate_data()
+        writer.writerow(data)
+        time.sleep(1)  # Wait for 1 second before generating the next data row
+
+print(f"Data saved to '{csv_file_path}'")
