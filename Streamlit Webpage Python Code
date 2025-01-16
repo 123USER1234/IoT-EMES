@@ -1,0 +1,126 @@
+import streamlit as st
+import time
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+
+#  Full Screen config
+st.set_page_config(layout="wide")
+
+#  Dashboard
+def simulate_data():
+    voltage = round(random.uniform(3.0, 5.0), 2)
+    current = round(random.uniform(0.1, 2.0), 2)
+    power = round(voltage * current, 2)
+    cost_per_kwh = 0.23  # Cost in USD per kWh
+    real_time_cost = round((power / 1000) * cost_per_kwh, 4)
+    total_cost = round(random.uniform(0.0, 50.0), 2)
+    hr_cost = round(random.uniform(100, 1000), 2)
+    it_cost = round(random.uniform(100, 1000), 2)
+    finance_cost = round(random.uniform(100, 1000), 2)
+    external_relations_cost = round(random.uniform(100, 1000), 2)
+    gas_status = random.choice(['Low', 'Medium', 'High'])
+    time_seconds = int(time.time())
+
+    return [time_seconds, voltage, current, power, real_time_cost, total_cost,
+            hr_cost, it_cost, finance_cost, external_relations_cost, gas_status]
+
+# Splash Screen 
+def splash_screen():
+    splash_placeholder = st.empty()  # Create an empty placeholder for splash screen
+    
+    # HTML code for styling the splash screen
+    splash_screen_html = """
+    <div style="background-color: #4CAF50; padding: 100px; text-align: center; border-radius: 10px; color: white; font-size: 36px; font-family: 'Arial', sans-serif;">
+        <h1>Welcome to IoT & EMES System Webpage!</h1>
+        <p>Loading the system, please wait...</p>
+    </div>
+    """
+    
+    # Display splash screen with custom styling
+    splash_placeholder.markdown(splash_screen_html, unsafe_allow_html=True)
+    
+    time.sleep(3)  # Display the splash screen for 3 seconds
+    splash_placeholder.empty()  # Remove splash screen after 3 seconds
+
+# Dashboard Page
+def show_dashboard():
+    # Title 
+    st.markdown("<h1>Real-Time Dashboard</h1>", unsafe_allow_html=True)
+
+    # Filters Data Costs
+    time_filter = st.selectbox("Select Time Period", ["Last 24 Hours", "Last Week", "Last Month"], index=0)
+    cost_filter = st.slider("Filter by Cost (USD)", min_value=0, max_value=1000, value=(0, 500))
+
+    st.write(f"Filtering Data for: {time_filter} with cost range: ${cost_filter[0]} - ${cost_filter[1]}")
+
+    #  Dynamic Sliders for Voltage and Current 
+    voltage_slider = st.slider("Adjust Voltage", min_value=3.0, max_value=5.0, value=4.0, step=0.1)
+    current_slider = st.slider("Adjust Current", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
+
+    # Dynamic Power and Cost Calculation
+    power = round(voltage_slider * current_slider, 2)
+    cost_per_kwh = 0.23  # Cost in USD per kWh
+    real_time_cost = round((power / 1000) * cost_per_kwh, 4)
+
+    st.title(f"Real-Time Cost: ${real_time_cost}")
+    st.markdown("---")  # Add a line separator for style
+
+    # KPI for Yearly Costs
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("HR Yearly Cost", f"${random.randint(200, 1000)}", delta=f"+${random.randint(10, 200)}", delta_color="inverse")
+    with col2:
+        st.metric("IT Yearly Cost", f"${random.randint(200, 1000)}", delta=f"+${random.randint(10, 200)}", delta_color="inverse")
+    with col3:
+        st.metric("Finance Yearly Cost", f"${random.randint(200, 1000)}", delta=f"+${random.randint(10, 200)}", delta_color="inverse")
+    with col4:
+        st.metric("External Relations Yearly Cost", f"${random.randint(200, 1000)}", delta=f"+${random.randint(10, 200)}", delta_color="inverse")
+
+    st.markdown("---")  # Add a line separator for style
+
+    # charts
+    st.subheader("Energy Metrics and Departmental Costs")
+
+    # data for charts
+    x = np.arange(0, 10)
+    y1 = np.random.random(10) * 100  
+    y2 = np.random.random(10) * 50   
+    y3 = np.random.random(10) * 25   
+    y4 = np.random.random(10) * 75  
+
+    # default style
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(10, 4))  # Reduced figure size
+
+    ax1.plot(x, y1, color='orange', lw=2)
+    ax1.set_title("Voltage Over Time", fontsize=10)
+    ax2.plot(x, y2, color='cyan', lw=2)
+    ax2.set_title("Current Over Time", fontsize=10)
+    ax3.plot(x, y3, color='magenta', lw=2)
+    ax3.set_title("Power Over Time", fontsize=10)
+
+    # Power chart
+    ax4.plot(x, y4, color='green', lw=2)
+    ax4.set_title("Real-Time Power Use", fontsize=10)
+
+    st.pyplot(fig)
+
+    # Display Fluctuations with Dynamic Bar Chart
+    fluctuation_data = np.random.random(100) * 100
+
+    # Create a bar chart using matplotlib with green color
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.bar(np.arange(len(fluctuation_data)), fluctuation_data, color='green')
+    ax.set_title('Energy Usage Fluctuations', fontsize=12)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Energy (kWh)')
+
+    st.pyplot(fig)
+
+# --- Main App Flow ---
+def main():
+    splash_screen()  # splash screen 
+    show_dashboard()  #  main dashboard 
+
+if __name__ == '__main__':
+    main()
