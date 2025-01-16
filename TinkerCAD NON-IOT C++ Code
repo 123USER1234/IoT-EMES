@@ -1,0 +1,282 @@
+LIGHT SWITCHES ON MANUALLY: 
+
+#include <LiquidCrystal.h>
+
+// Pin definitions for the parallel LCD (RS, EN, D4, D5, D6, D7)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);  
+
+// Pin definitions for other components
+int button1 = 2;  // Push Button Pin D 2  
+int button2 = 3;  // Push Button Pin D 3  
+int button3 = 4;  // Push Button Pin D 4  
+int button4 = 5;  // Push Button Pin D 5  
+int relay1 = 8;   // Relay Pin D 8  
+int relay2 = 9;   // Relay Pin D 9  
+int relay3 = 10;  // Relay Pin D 10  
+int relay4 = 11;  // Relay Pin D 11  
+
+// Variables for relay and cost calculations
+int status = false;  
+
+// Constants for electricity cost calculation
+const float costPerKWh = 0.23;    // 0.23 USD per KWh (2024 cost)
+const float lightPower = 0.015;    // Light power consumption (15W per light bulb = 0.015 kW)
+const float acPower = 1.0;         // AC power consumption (1000W = 1 kW)
+
+// Variables for hourly and monthly costs
+float hourlyCost = 0;
+float monthlyCost = 0;
+float totalCost = 0;
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin(16, 2);          // Set up a 16x2 LCD display
+
+  // Start serial communication for debugging
+  Serial.begin(9600);
+
+  // Set pin modes for relays
+  pinMode(relay1, OUTPUT);  
+  pinMode(relay2, OUTPUT);  
+  pinMode(relay3, OUTPUT);  
+  pinMode(relay4, OUTPUT);  
+
+  // Set pin mode for pushbuttons
+  pinMode(button1, INPUT_PULLUP);  
+  pinMode(button2, INPUT_PULLUP);  
+  pinMode(button3, INPUT_PULLUP);  
+  pinMode(button4, INPUT_PULLUP);
+}
+
+void loop() {
+  // Simulate voltage and current (random values)
+  float voltage = random(30, 50) / 10.0;  // Voltage between 3V and 5V
+  float current = random(10, 200) / 100.0; // Current between 0.1A and 2.0A
+  float power = voltage * current;  // Power calculation (P = V * I)
+
+  // Calculate real-time cost
+  float realTimeCost = (power / 1000) * costPerKWh; // Convert power to kW and calculate cost
+
+  // Calculate hourly cost
+  hourlyCost = realTimeCost;  // Hourly cost is the real-time cost for the current hour
+
+  // Calculate monthly cost (assuming 30 days in a month and 24 hours per day)
+  monthlyCost = hourlyCost * 30 * 24;
+
+  // Accumulate total cost
+  totalCost += realTimeCost;
+
+  // Button handling for each relay
+  if (digitalRead(button1) == true) {  
+    status = !status;  
+    digitalWrite(relay1, status);  
+
+    // Output to Serial Monitor
+    Serial.print("Relay 1 Status: ");
+    Serial.println(status ? "ON" : "OFF");
+    Serial.print("Real-time Cost for Relay 1: $");
+    Serial.println(realTimeCost, 4);
+    Serial.print("Total Accumulated Cost: $");
+    Serial.println(totalCost, 4);
+    Serial.print("Hourly Cost: $");
+    Serial.println(hourlyCost, 4);
+    Serial.print("Monthly Cost: $");
+    Serial.println(monthlyCost, 4);
+  }   
+  while(digitalRead(button1) == true);  
+  delay(5);  
+
+  if (digitalRead(button2) == true) {  
+    status = !status;  
+    digitalWrite(relay2, status);  
+
+    // Output to Serial Monitor
+    Serial.print("Relay 2 Status: ");
+    Serial.println(status ? "ON" : "OFF");
+    Serial.print("Real-time Cost for Relay 2: $");
+    Serial.println(realTimeCost, 4);
+    Serial.print("Total Accumulated Cost: $");
+    Serial.println(totalCost, 4);
+    Serial.print("Hourly Cost: $");
+    Serial.println(hourlyCost, 4);
+    Serial.print("Monthly Cost: $");
+    Serial.println(monthlyCost, 4);
+  }   
+  while(digitalRead(button2) == true);  
+  delay(5); 
+
+  if (digitalRead(button3) == true) {  
+    status = !status;  
+    digitalWrite(relay3, status);  
+
+    // Output to Serial Monitor
+    Serial.print("Relay 3 Status: ");
+    Serial.println(status ? "ON" : "OFF");
+    Serial.print("Real-time Cost for Relay 3: $");
+    Serial.println(realTimeCost, 4);
+    Serial.print("Total Accumulated Cost: $");
+    Serial.println(totalCost, 4);
+    Serial.print("Hourly Cost: $");
+    Serial.println(hourlyCost, 4);
+    Serial.print("Monthly Cost: $");
+    Serial.println(monthlyCost, 4);
+  }   
+  while(digitalRead(button3) == true);  
+  delay(5);
+
+  if (digitalRead(button4) == true) {  
+    status = !status;  
+    digitalWrite(relay4, status);  
+
+    // Output to Serial Monitor
+    Serial.print("Relay 4 Status: ");
+    Serial.println(status ? "ON" : "OFF");
+    Serial.print("Real-time Cost for Relay 4: $");
+    Serial.println(realTimeCost, 4);
+    Serial.print("Total Accumulated Cost: $");
+    Serial.println(totalCost, 4);
+    Serial.print("Hourly Cost: $");
+    Serial.println(hourlyCost, 4);
+    Serial.print("Monthly Cost: $");
+    Serial.println(monthlyCost, 4);
+  }   
+  while(digitalRead(button4) == true);  
+  delay(5); 
+}
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+LIGHT ALWAYS ON:
+
+#include <LiquidCrystal.h>
+
+// Pin definitions for the parallel LCD (RS, EN, D4, D5, D6, D7)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);  // Adjust pin numbers based on your wiring
+
+// Pin definitions for other components
+const int lightPins[] = {8, 9, 10, 6};  // Pins for 4 light bulbs (office lights)
+const int acPin = 7;                    // Pin for the air conditioning unit (office HVAC)
+const int button1 = 2;  // Push Button Pin D 2
+const int button2 = 3;  // Push Button Pin D 3
+const int button3 = 4;  // Push Button Pin D 4
+const int button4 = 5;  // Push Button Pin D 5
+
+// Constants for electricity cost calculation
+const float costPerKWh = 0.23;    // 0.23 USD per KWh (2024 cost)
+const float lightPower = 0.015;    // Light power consumption (15W per light bulb = 0.015 kW)
+const float acPower = 1.0;         // AC power consumption (1000W = 1 kW)
+
+// Department usage (daily in hours)
+float hrLightUsage = 24;   // HR light usage in hours (always on)
+float itLightUsage = 24;   // IT light usage in hours (always on)
+float financeLightUsage = 24;  // Finance light usage in hours (always on)
+float externalRelationsLightUsage = 24; // External Relations light usage in hours (always on)
+float itACUsage = 0;      // IT AC usage in hours (not considering AC usage for simplicity)
+
+
+// Department yearly costs (initialized to 0)
+float hrCost = 0;
+float itCost = 0;
+float financeCost = 0;
+float externalRelationsCost = 0;
+
+// Total accumulated cost variable
+float totalCost = 0;
+
+// Variables for hourly and monthly costs
+float hourlyCost = 0;
+float monthlyCost = 0;
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin(16, 2);          // Set up a 16x2 LCD display
+
+  // Start serial communication for debugging
+  Serial.begin(9600);
+
+  // Set pin modes for light bulbs
+  for (int i = 0; i < 4; i++) {
+    pinMode(lightPins[i], OUTPUT);
+  }
+
+  // Set pin mode for AC and pushbuttons
+  pinMode(acPin, OUTPUT);
+  pinMode(button1, INPUT_PULLUP);
+  pinMode(button2, INPUT_PULLUP);
+  pinMode(button3, INPUT_PULLUP);
+  pinMode(button4, INPUT_PULLUP);
+
+  // Turn on all lights and AC initially (because they are always on)
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(lightPins[i], HIGH);  // Keep the lights on at all times
+  }
+  digitalWrite(acPin, LOW);  // Assuming no AC usage for simplicity
+
+  // Send the CSV header for department usage and costs
+  Serial.println("Time (s),Voltage (V),Current (A),Power (W),Real-time Cost (USD),Total Cost (USD),Hourly Cost (USD),Monthly Cost (USD),HR Yearly Cost (USD),IT Yearly Cost (USD),Finance Yearly Cost (USD),External Relations Yearly Cost (USD)");
+}
+
+void loop() {
+  // Simulate voltage and current (random values)
+  float voltage = random(30, 50) / 10.0;  // Voltage between 3V and 5V
+  float current = random(10, 200) / 100.0; // Current between 0.1A and 2.0A
+  float power = voltage * current;  // Power calculation (P = V * I)
+
+  // Calculate real-time cost
+  float realTimeCost = (power / 1000) * costPerKWh; // Convert power to kW and calculate cost
+
+  // Calculate hourly cost
+  hourlyCost = realTimeCost;  // Hourly cost is the real-time cost for the current hour
+
+  // Calculate monthly cost (assuming 30 days in a month and 24 hours per day)
+  monthlyCost = hourlyCost * 30 * 24;
+
+  // Calculate yearly costs for each department (they are always on)
+  hrCost = hrLightUsage * lightPower * costPerKWh * 365; 
+  itCost = (itLightUsage * lightPower + itACUsage * acPower) * costPerKWh * 365;
+  financeCost = financeLightUsage * lightPower * costPerKWh * 365; 
+  externalRelationsCost = externalRelationsLightUsage * lightPower * costPerKWh * 365;
+
+  // Accumulate total cost
+  totalCost += realTimeCost;
+
+  // Display department costs on LCD
+  lcd.setCursor(0, 0);  // Position the cursor at the top row
+  lcd.print("Total: $");
+  lcd.print(totalCost, 4);  // Display accumulated total cost with 4 decimal places
+
+  lcd.setCursor(0, 1);  // Move to the second row
+  lcd.print("Hourly: $");
+  lcd.print(hourlyCost, 4);  // Display hourly cost
+
+  // Output data in CSV format for easy reading and analysis
+  Serial.print(millis() / 1000); // Time in seconds
+  Serial.print(",");         // Comma separator
+  Serial.print(voltage, 2);  // Voltage
+  Serial.print(",");         // Comma separator
+  Serial.print(current, 2);  // Current
+  Serial.print(",");         // Comma separator
+  Serial.print(power, 2);    // Power
+  Serial.print(",");         // Comma separator
+  Serial.print(realTimeCost, 4);  // Real-time cost
+  Serial.print(",");         // Comma separator
+  Serial.print(totalCost, 4);  // Total accumulated cost
+  Serial.print(",");         // Comma separator
+  Serial.print(hourlyCost, 4);  // Hourly cost
+  Serial.print(",");         // Comma separator
+  Serial.print(monthlyCost, 4);  // Monthly cost
+  Serial.print(",");         // Comma separator
+  Serial.print(hrCost, 2);   // HR Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(itCost, 2);   // IT Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(financeCost, 2); // Finance Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(externalRelationsCost, 2); // External Relations Yearly Cost
+  Serial.println("");        // Newline for each entry
+
+  // Simulate natural electricity usage by adding delays
+  delay(random(500, 3000));   // Random delay between 0.5 to 3 seconds to simulate variable usage
+}
