@@ -1,0 +1,394 @@
+TOTAL COST ON LCD: 
+
+#include <LiquidCrystal.h>
+
+// Pin definitions for the parallel LCD (RS, EN, D4, D5, D6, D7)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);  // Adjust pin numbers based on your wiring
+
+// Pin definitions for other components
+const int lightPins[] = {8, 9, 10, 6};  // Pins for 4 light bulbs (representing office lights)
+const int acPin = 7;                    // Pin for the air conditioning unit (representing AC)
+const int pirPin = 13;                  // Pin for PIR sensor (motion detection)
+const int ldrPin = A1;                  // Pin for LDR (Light dependent resistor)
+const int gasPin = A0;                  // Pin for gas sensor (e.g., MQ series)
+
+// Constants for electricity cost calculation
+const float costPerKWh = 0.23;    // 0.23 USD per KWh (2024 cost)
+const float lightPower = 0.015;    // Light power consumption (15W per light bulb = 0.015 kW)
+const float acPower = 1.0;         // AC power consumption (1000W = 1 kW)
+
+// Department usage (daily in hours)
+float hrLightUsage = 0;   // HR light usage in hours
+float itLightUsage = 0;   // IT light usage in hours
+float financeLightUsage = 0;  // Finance light usage in hours
+float externalRelationsLightUsage = 0; // External Relations light usage in hours
+float itACUsage = 0;      // IT AC usage in hours
+
+// Department yearly costs (initialized to 0)
+float hrCost = 0;
+float itCost = 0;
+float financeCost = 0;
+float externalRelationsCost = 0;
+
+// Total accumulated cost variable
+float totalCost = 0;
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin(16, 2);          // Set up a 16x2 LCD display
+
+  // Start serial communication for debugging
+  Serial.begin(9600);
+
+  // Set pin modes for light bulbs
+  for (int i = 0; i < 4; i++) {
+    pinMode(lightPins[i], OUTPUT);
+  }
+
+  // Set pin mode for AC and PIR sensor
+  pinMode(acPin, OUTPUT);
+  pinMode(pirPin, INPUT);
+
+  // Set LDR and Gas sensor as inputs
+  pinMode(ldrPin, INPUT);
+  pinMode(gasPin, INPUT);
+
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(lightPins[i], LOW);
+  }
+  digitalWrite(acPin, LOW);
+
+  // Send the CSV header for Dataset
+  Serial.println("Time (s),Voltage (V),Current (A),Power (W),Real-time Cost (USD),Total Cost (USD),HR Yearly Cost (USD),IT Yearly Cost (USD),Finance Yearly Cost (USD),External Relations Yearly Cost (USD),Gas Status");
+}
+
+void loop() {
+  // Simulate voltage and current (random values)
+  float voltage = random(30, 50) / 10.0;  // Voltage between 3V and 5V
+  float current = random(10, 200) / 100.0; // Current between 0.1A and 2.0A
+  float power = voltage * current;  // Power calculation (P = V * I)
+
+  // Calculate real-time cost
+  float realTimeCost = (power / 1000) * costPerKWh; // Convert power to kW and calculate cost
+
+  // Accumulate total cost
+  totalCost += realTimeCost;
+
+  hrLightUsage = random(1, 4);       
+  itLightUsage = random(2, 6);       
+  itACUsage = random(3, 7);          
+  financeLightUsage = random(1, 3);  
+  externalRelationsLightUsage = random(1, 3); 
+
+  // Calculate yearly costs for each department
+  hrCost = hrLightUsage * lightPower * costPerKWh * 365; 
+  itCost = (itLightUsage * lightPower + itACUsage * acPower) * costPerKWh * 365;
+  financeCost = financeLightUsage * lightPower * costPerKWh * 365; 
+  externalRelationsCost = externalRelationsLightUsage * lightPower * costPerKWh * 365;
+
+  // Read Gas Sensor
+  int gasValue = analogRead(gasPin);
+  String gasStatus = "Low";
+  if (gasValue > 600) gasStatus = "High";
+  else if (gasValue > 400) gasStatus = "Medium";
+
+  // Read LDR
+  int ldrValue = analogRead(ldrPin);
+  String lightStatus = (ldrValue < 500) ? "ON" : "OFF"; // Light on at night
+
+  // Read PIR sensor
+  int pirValue = digitalRead(pirPin);
+  String fanStatus = (pirValue == HIGH) ? "ON" : "OFF"; // Fan on if motion detected
+
+  // Display only the total accumulated cost on LCD
+  lcd.setCursor(0, 0);  // Position the cursor at the top row
+  lcd.print("Total: $");
+  lcd.print(totalCost, 4);  // Display accumulated total cost with 4 decimal places
+
+  // Output data in CSV format for PLX-DAQ (including the total cost and gas status)
+  Serial.print(millis() / 1000); // Time in seconds
+  Serial.print(",");         // Comma separator
+  Serial.print(voltage, 2);  // Voltage
+  Serial.print(",");         // Comma separator
+  Serial.print(current, 2);  // Current
+  Serial.print(",");         // Comma separator
+  Serial.print(power, 2);    // Power
+  Serial.print(",");         // Comma separator
+  Serial.print(realTimeCost, 4);  // Real-time cost
+  Serial.print(",");         // Comma separator
+  Serial.print(totalCost, 4);  // Total accumulated cost
+  Serial.print(",");         // Comma separator
+  Serial.print(hrCost, 2);   // HR Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(itCost, 2);   // IT Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(financeCost, 2); // Finance Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.print(externalRelationsCost, 2); // External Relations Yearly Cost
+  Serial.print(",");         // Comma separator
+  Serial.println(gasStatus); // Output the gas status
+
+  
+  delay(random(500, 3000));   // Random delay between 0.5 to 3 seconds 
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+// Include the library code:
+#include <LiquidCrystal.h>
+
+// Initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+// For ultrasound sensor
+int distanceThreshold = 0;
+int cm = 0;
+int inches = 0;
+
+// For Relay Control
+int releNO = 13;
+int inputPir = 8;
+int val = 0;
+int resuldoSensorLDR;
+int sensorLDR = A0;
+
+// For Gas sensor
+int const PINO_SGAS = A1;
+
+// Constants for electricity cost calculation
+const float costPerKWh = 0.23;  // 0.23 USD per KWh (2024 cost)
+const float lightPower = 0.015;  // Light power consumption (15W per light bulb = 0.015 kW)
+
+// Variables for hourly and monthly costs
+float hourlyCost = 0;
+float monthlyCost = 0;
+float totalCost = 0;
+
+// Function to read ultrasonic distance
+long readUltrasonicDistance(int triggerPin, int echoPin) {
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigger pin to HIGH state for 10 microseconds
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup() {
+  // Set up the LCD's number of columns and rows
+  lcd.begin(16, 2);
+  
+  pinMode(releNO, OUTPUT);
+  pinMode(inputPir, INPUT);
+  pinMode(sensorLDR, INPUT);
+  Serial.begin(9600);  // Start serial communication
+
+  //  headers for dataset
+  Serial.println("Time (s), Distance (cm), PIR Status (HIGH/LOW), LDR Value, Gas Sensor Value, Light Relay Status, Real-time Cost (USD), Total Cost (USD), Hourly Cost (USD), Monthly Cost (USD)");
+}
+
+void loop() {
+  // Set threshold distance to activate LEDs
+  distanceThreshold = 350;
+  
+  // Measure the ping time in cm
+  cm = 0.01723 * readUltrasonicDistance(7, 6);
+  // Convert to inches by dividing by 2.54
+  inches = (cm / 2.54);
+  
+  // Get the PIR sensor and LDR readings
+  val = digitalRead(inputPir);
+  resuldoSensorLDR = analogRead(sensorLDR);
+  
+  // Light control based on LDR and PIR
+  if (resuldoSensorLDR < 600) {
+    if (val == HIGH) {
+      digitalWrite(releNO, HIGH);
+      lcd.setCursor(0, 1);
+      lcd.print("L: On     ");
+      
+      // Calculate real-time cost for this light operation
+      float realTimeCost = lightPower * costPerKWh * 0.25;  // Assuming it runs for 15 minutes (0.25 hours)
+      hourlyCost = realTimeCost;  // Update hourly cost
+      monthlyCost = hourlyCost * 30 * 24;  // Monthly cost for 30 days
+      
+      // Update total cost
+      totalCost += realTimeCost;
+      
+      // Output to Serial Monitor in real-time dataset format (CSV)
+      Serial.print(millis() / 1000);  // Time in seconds
+      Serial.print(", ");
+      Serial.print(cm);  // Distance in cm
+      Serial.print(", ");
+      Serial.print(val == HIGH ? "HIGH" : "LOW");  // PIR status
+      Serial.print(", ");
+      Serial.print(resuldoSensorLDR);  // LDR value
+      Serial.print(", ");
+      Serial.print(analogRead(PINO_SGAS));  // Gas sensor value
+      Serial.print(", ");
+      Serial.print(val == HIGH ? "ON" : "OFF");  // Light relay status
+      Serial.print(", ");
+      Serial.print(realTimeCost, 4);  // Real-time cost
+      Serial.print(", ");
+      Serial.print(totalCost, 4);  // Total accumulated cost
+      Serial.print(", ");
+      Serial.print(hourlyCost, 4);  // Hourly cost
+      Serial.print(", ");
+      Serial.println(monthlyCost, 4);  // Monthly cost
+    }
+    else {
+      digitalWrite(releNO, LOW);
+      lcd.setCursor(0, 1);
+      lcd.print("L: Off    ");
+    }
+  } else {
+    digitalWrite(releNO, LOW);
+    Serial.println(resuldoSensorLDR);  // Output the LDR value to the serial monitor
+  }
+  
+  // Gas sensor reading and categorization
+  int color = analogRead(PINO_SGAS);
+  
+  lcd.setCursor(8, 0);
+  if (color <= 85) {
+    lcd.print("G:Low ");
+  } else if (color <= 120) {
+    lcd.print("G:Med ");
+  } else if (color <= 200) {
+    lcd.print("G:High");
+  } else if (color <= 300) {
+    lcd.print("G:Ext ");
+  }
+  
+  // Display the distance on the LCD
+  lcd.setCursor(0, 0);
+  lcd.print("D:");
+  lcd.print(cm);  // Distance in cm
+  lcd.print(" cm  ");  // Display the distance in centimeters
+  
+  // Output gas sensor data to Serial Monitor in real-time dataset form
+  Serial.print("Gas Sensor Value: ");
+  Serial.println(color);
+  
+  // Output Ultrasonic Sensor Data to Serial Monitor
+  Serial.print("Ultrasonic Distance (cm): ");
+  Serial.println(cm);
+  
+  // Output cost calculations to the Serial Monitor in real-time dataset form
+  Serial.print("Hourly Cost: $");
+  Serial.print(hourlyCost, 4);
+  Serial.print(" Monthly Cost: $");
+  Serial.println(monthlyCost, 4);
+  
+  // Small delay to prevent flooding the serial monitor
+  delay(100);  // You can adjust this delay for your desired real-time speed
+}
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Shows Gas Light and Distance on LCD:
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+//For ultrasound sensor
+int distanceThreshold = 0;
+int cm = 0;
+int inches = 0;
+
+//for Relay Control
+int releNO = 13;
+int inputPir = 8;
+int val = 0;
+int resuldoSensorLDR;
+int sensorLDR = A0;
+
+//For Gas sensor
+int const PINO_SGAS = A1;
+
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigger pin to HIGH state for 10 microseconds
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup() {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  
+  pinMode(releNO, OUTPUT);
+  pinMode(inputPir, INPUT);
+  pinMode(sensorLDR, INPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // set threshold distance to activate LEDs
+  distanceThreshold = 350;
+  // measure the ping time in cm
+  cm = 0.01723 * readUltrasonicDistance(7, 6);
+  // convert to inches by dividing by 2.54
+  inches = (cm / 2.54);
+  
+    lcd.setCursor(0,0); // Sets the location at which subsequent text written to the LCD will be displayed
+  lcd.print("D:"); // Prints string "Distance" on the LCD
+  lcd.print(cm); // Prints the distance value from the sensor
+  lcd.print("cm");
+  delay(10);
+  
+    val = digitalRead(inputPir);
+  resuldoSensorLDR = analogRead(sensorLDR);
+  if(resuldoSensorLDR<600)
+  {
+    if(val == HIGH)
+    {
+      digitalWrite(releNO, HIGH);
+      lcd.setCursor(0,1);
+  lcd.print("L: On ");
+      delay(5000);
+  }
+    else{
+      digitalWrite(releNO, LOW);lcd.setCursor(0,1);
+  lcd.print("L: Off");
+      delay(300);
+  }
+}
+  else{ digitalWrite (releNO, LOW);
+  Serial.println(resuldoSensorLDR);
+  delay(500);
+  }
+  
+  int color = analogRead(PINO_SGAS);
+  
+  lcd.setCursor(8,0);
+  //lcd.print("");
+  if(color <= 85){
+    lcd.print("G:Low ");
+  } else if(color <= 120){
+    lcd.print("G:Med ");
+  } else if(color <= 200){
+    lcd.print("G:High");
+  } else if(color <= 300){
+    lcd.print("G:Ext ");
+  }
+  
+  delay(250);
+}
